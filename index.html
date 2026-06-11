@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard – Gestión de Solicitudes · PUCMM Postgrado</title>
+<style>
+  :root {
+    --navy:#1a2e5a; --navy-light:#2a4080; --navy-dark:#0f1e3d;
+    --gold:#c8960c; --gold-light:#f0b429;
+    --bg:#f4f6f9; --white:#ffffff;
+    --gray-100:#f0f2f5; --gray-200:#e2e6ed; --gray-300:#c8cdd8;
+    --gray-400:#9aa3b2; --gray-500:#6b7585; --gray-600:#5a6578; --gray-800:#2d3748;
+    --green:#276749; --green-light:#d4edda;
+    --red:#c0392b; --red-light:#fde8e6;
+    --yellow:#b45309; --yellow-light:#fef3cd;
+    --blue:#1a56a4; --blue-light:#dbeafe;
+    --radius:10px; --shadow:0 2px 12px rgba(26,46,90,.09); --sidebar-w:220px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--gray-800);font-size:14px;display:flex;min-height:100vh}
+
+  /* SIDEBAR */
+  .sidebar{width:var(--sidebar-w);background:var(--navy-dark);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;overflow-y:auto}
+  .sidebar-brand{display:flex;align-items:center;gap:10px;padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.07)}
+  .brand-logo{width:40px;height:40px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:var(--navy-dark);flex-shrink:0}
+  .brand-text strong{display:block;font-size:14px;font-weight:700;color:#fff}
+  .brand-text span{font-size:11px;color:rgba(255,255,255,.5)}
+  .sidebar-nav{padding:12px 10px;flex:1}
+  .nav-section{font-size:10px;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;padding:10px 8px 5px;margin-top:8px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:rgba(255,255,255,.65);font-size:13.5px;font-weight:500;cursor:pointer;transition:background .12s,color .12s;margin-bottom:2px;user-select:none}
+  .nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
+  .nav-item.active{background:var(--navy-light);color:#fff;font-weight:600}
+  .nav-item .icon{font-size:16px;width:22px;text-align:center}
+  .nav-badge{margin-left:auto;background:var(--gold);color:var(--navy-dark);font-size:11px;font-weight:800;padding:1px 7px;border-radius:20px;min-width:20px;text-align:center}
+  .nav-badge.zero{background:rgba(255,255,255,.12);color:rgba(255,255,255,.5)}
+  .sidebar-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.07);font-size:12px;color:rgba(255,255,255,.35);line-height:1.7}
+  .sidebar-footer a{color:rgba(255,255,255,.5);text-decoration:none}
+  .sidebar-footer a:hover{color:#fff}
+
+  /* MAIN */
+  .main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column}
+
+  /* TOPBAR */
+  .topbar{background:var(--white);border-bottom:1px solid var(--gray-200);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+  .topbar-left h1{font-size:20px;font-weight:700;color:var(--navy)}
+  .topbar-left p{font-size:12.5px;color:var(--gray-400);margin-top:1px}
+  .topbar-right{display:flex;align-items:center;gap:14px}
+  .search-wrap{position:relative;display:flex;align-items:center}
+  .search-wrap input{border:1.5px solid var(--gray-200);border-radius:8px;padding:8px 12px 8px 34px;font-size:13px;width:210px;background:var(--gray-100);font-family:inherit;transition:border-color .15s}
+  .search-wrap input:focus{outline:none;border-color:var(--navy-light);background:#fff}
+  .search-icon{position:absolute;left:10px;font-size:14px;color:var(--gray-400);pointer-events:none}
+  .refresh-btn{width:36px;height:36px;border:1.5px solid var(--gray-200);border-radius:50%;background:var(--white);cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;transition:background .12s;color:var(--gray-500)}
+  .refresh-btn:hover{background:var(--gray-100);color:var(--navy)}
+  .refresh-btn.spinning{animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* NOTIFICATION BELL */
+  .bell-wrap{position:relative}
+  .bell-btn{width:36px;height:36px;border:1.5px solid var(--gray-200);border-radius:50%;background:var(--white);cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;transition:background .12s;color:var(--gray-500);position:relative}
+  .bell-btn:hover{background:var(--gray-100);color:var(--navy)}
+  .bell-count{position:absolute;top:-3px;right:-3px;background:var(--red);color:#fff;font-size:10px;font-weight:800;min-width:17px;height:17px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #fff}
+  .bell-count.hidden{display:none}
+  .bell-btn.ring{animation:ring .6s ease}
+  @keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(14deg)}40%{transform:rotate(-12deg)}60%{transform:rotate(8deg)}80%{transform:rotate(-5deg)}}
+  .bell-dropdown{position:absolute;top:46px;right:0;width:320px;background:#fff;border:1px solid var(--gray-200);border-radius:12px;box-shadow:0 12px 36px rgba(0,0,0,.16);z-index:300;display:none;overflow:hidden}
+  .bell-dropdown.open{display:block}
+  .bell-dd-head{padding:12px 16px;border-bottom:1px solid var(--gray-200);font-size:13px;font-weight:700;color:var(--navy);display:flex;justify-content:space-between;align-items:center}
+  .bell-dd-body{max-height:300px;overflow-y:auto}
+  .bell-row{padding:11px 16px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .1s}
+  .bell-row:hover{background:var(--gray-100)}
+  .bell-row .t{font-size:13px;font-weight:600;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bell-row .s{font-size:11.5px;color:var(--gray-400);margin-top:2px}
+  .bell-dd-foot{padding:10px 16px;text-align:center;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;background:var(--gray-100)}
+  .bell-dd-foot:hover{background:var(--gray-200)}
+
+  .topbar-user{display:flex;align-items:center;gap:9px;cursor:pointer}
+  .user-avatar{width:36px;height:36px;background:var(--navy);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff}
+  .user-name{font-size:13.5px;font-weight:600;color:var(--gray-800)}
+  .user-role{font-size:11.5px;color:var(--gray-400)}
+
+  /* CONTENT + VIEWS */
+  .content{padding:28px;flex:1}
+  .view{display:none}
+  .view.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* SYNC NOTICE */
+  .sync-notice{background:var(--blue-light);border:1px solid #93c5fd;border-radius:8px;padding:10px 16px;font-size:12.5px;color:var(--blue);margin-bottom:20px;display:flex;gap:8px;align-items:center}
+  .sync-notice a{color:var(--blue);font-weight:700;text-decoration:underline;cursor:pointer}
+
+  /* STATS */
+  .stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px}
+  .stat-card{background:var(--white);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);border:1px solid var(--gray-200);display:flex;flex-direction:column;gap:8px}
+  .stat-top{display:flex;align-items:flex-start;justify-content:space-between}
+  .stat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .si-b{background:var(--blue-light)} .si-y{background:var(--yellow-light)} .si-g{background:var(--green-light)} .si-r{background:var(--red-light)} .si-p{background:#ede9fe}
+  .stat-label{font-size:12px;color:var(--gray-400);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+  .stat-value{font-size:28px;font-weight:800;color:var(--navy);line-height:1}
+  .stat-sub{font-size:12px;color:var(--gray-400)}
+
+  /* CHARTS ROW */
+  .charts-row{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:18px;margin-bottom:24px}
+  .card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--gray-200);overflow:hidden}
+  .card-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 14px;border-bottom:1px solid var(--gray-200)}
+  .card-title{font-size:14.5px;font-weight:700;color:var(--navy)}
+  .card-body{padding:20px}
+
+  /* DONUT */
+  .donut-wrap{display:flex;align-items:center;gap:18px;justify-content:center;padding:6px 0}
+  .donut-legend{display:flex;flex-direction:column;gap:8px}
+  .legend-item{display:flex;align-items:center;gap:8px;font-size:12.5px}
+  .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .legend-label{color:var(--gray-600)}
+  .legend-pct{font-weight:700;color:var(--gray-800);margin-left:auto;padding-left:12px}
+
+  /* BAR */
+  .bar-chart{display:flex;gap:24px;align-items:flex-end;height:130px;padding:0 8px;justify-content:center}
+  .bar-col{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;max-width:80px}
+  .bar-bar{width:100%;border-radius:6px 6px 0 0;cursor:pointer;transition:opacity .15s}
+  .bar-bar:hover{opacity:.82}
+  .bar-label{font-size:12px;font-weight:600;color:var(--gray-500)}
+  .bar-val{font-size:13px;font-weight:800;color:var(--navy)}
+
+  /* EVENT LIST */
+  .event-list{display:flex;flex-direction:column}
+  .event-item{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--gray-200);cursor:pointer}
+  .event-item:last-child{border-bottom:none}
+  .event-date{background:var(--navy);color:#fff;border-radius:8px;padding:5px 9px;text-align:center;min-width:44px;flex-shrink:0}
+  .event-date .month{font-size:10px;font-weight:600;text-transform:uppercase;opacity:.75;letter-spacing:.05em}
+  .event-date .day{font-size:18px;font-weight:800;line-height:1}
+  .event-info{flex:1;min-width:0}
+  .event-name{font-size:13px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .event-meta{font-size:11.5px;color:var(--gray-400);margin-top:2px}
+
+  /* BADGES */
+  .badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;flex-shrink:0;white-space:nowrap}
+  .ba{background:var(--green-light);color:var(--green)}
+  .bp{background:var(--yellow-light);color:var(--yellow)}
+  .br{background:var(--red-light);color:var(--red)}
+  .bc{background:var(--gray-200);color:var(--gray-500)}
+  .chip{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--gray-200);color:var(--gray-600)}
+  .chip.csd{background:#e8f0fe;color:#1a56a4}.chip.csti{background:#f3e8ff;color:#7c3aed}
+
+  /* TABLE */
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse}
+  thead th{padding:11px 14px;text-align:left;font-size:11.5px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.06em;border-bottom:1.5px solid var(--gray-200);white-space:nowrap}
+  tbody tr{border-bottom:1px solid var(--gray-200);transition:background .1s;cursor:pointer}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:var(--gray-100)}
+  td{padding:12px 14px;font-size:13.5px;color:var(--gray-800);vertical-align:middle}
+  td.id{font-weight:700;color:var(--navy);font-size:12.5px}
+  td.name{font-weight:600}
+  .table-actions{display:flex;align-items:center;gap:6px}
+  .action-btn{width:30px;height:30px;border:none;border-radius:6px;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:background .1s;color:var(--gray-500)}
+  .action-btn:hover{background:var(--gray-200);color:var(--navy)}
+  .action-btn.ap:hover{background:var(--green-light);color:var(--green)}
+  .action-btn.rj:hover{background:var(--red-light);color:var(--red)}
+
+  /* PAGINATION */
+  .pagination{display:flex;align-items:center;gap:6px;padding:14px 20px;border-top:1px solid var(--gray-200);justify-content:space-between}
+  .page-info{font-size:12.5px;color:var(--gray-400)}
+  .page-btns{display:flex;gap:4px}
+  .page-btn{width:32px;height:32px;border:1.5px solid var(--gray-200);border-radius:7px;background:var(--white);cursor:pointer;font-size:13px;font-weight:600;color:var(--gray-600);display:flex;align-items:center;justify-content:center;transition:all .1s;font-family:inherit}
+  .page-btn:hover{border-color:var(--navy);color:var(--navy)}
+  .page-btn.active{background:var(--navy);border-color:var(--navy);color:#fff}
+
+  /* FILTER BAR */
+  .filter-bar{display:flex;gap:8px;padding:12px 20px;border-bottom:1px solid var(--gray-200);flex-wrap:wrap;align-items:center}
+  .filter-select{border:1.5px solid var(--gray-200);border-radius:7px;padding:6px 28px 6px 10px;font-size:13px;font-family:inherit;color:var(--gray-800);background:#fff;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239aa3b2' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;cursor:pointer}
+  .filter-select:focus{outline:none;border-color:var(--navy-light)}
+  .filter-label{font-size:12px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em;align-self:center}
+
+  /* QUICK ACTIONS */
+  .quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:24px}
+  .qa-btn{background:var(--white);border:1.5px solid var(--gray-200);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:all .15s;text-align:center;font-family:inherit}
+  .qa-btn:hover{border-color:var(--navy);box-shadow:0 4px 12px rgba(26,46,90,.1);transform:translateY(-1px)}
+  .qa-btn .icon{font-size:24px}
+  .qa-btn .label{font-size:12.5px;font-weight:700;color:var(--navy)}
+  .qa-btn .desc{font-size:11px;color:var(--gray-400)}
+
+  /* GENERIC BUTTONS */
+  .btn{border:none;border-radius:8px;padding:9px 18px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s;display:inline-flex;align-items:center;gap:7px}
+  .btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy-light)}
+  .btn-gold{background:var(--gold);color:#fff}.btn-gold:hover{background:#b3850a}
+  .btn-green{background:var(--green);color:#fff}.btn-green:hover{background:#1e5538}
+  .btn-ghost{background:#fff;border:1.5px solid var(--gray-200);color:var(--gray-600)}.btn-ghost:hover{border-color:var(--navy);color:var(--navy)}
+  .btn-sm{padding:6px 12px;font-size:12.5px}
+
+  /* SECTION HEAD inside views */
+  .view-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+  .view-head h2{font-size:18px;color:var(--navy);font-weight:800}
+  .view-head p{font-size:13px;color:var(--gray-500);margin-top:2px}
+
+  /* FORM ELEMENTS */
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+  .form-field{display:flex;flex-direction:column;gap:5px}
+  .form-field.full{grid-column:1/-1}
+  .form-field label{font-size:12.5px;font-weight:700;color:var(--gray-600)}
+  .form-field input,.form-field select,.form-field textarea{border:1.5px solid var(--gray-200);border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;color:var(--gray-800);background:#fff;width:100%}
+  .form-field input:focus,.form-field select:focus,.form-field textarea:focus{outline:none;border-color:var(--navy-light);box-shadow:0 0 0 3px rgba(42,64,128,.1)}
+
+  /* CALENDAR */
+  .cal-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap}
+  .cal-nav{display:flex;align-items:center;gap:10px}
+  .cal-nav button{width:36px;height:36px;border:1.5px solid var(--gray-200);border-radius:8px;background:#fff;cursor:pointer;font-size:16px;color:var(--navy);font-family:inherit}
+  .cal-nav button:hover{background:var(--gray-100)}
+  .cal-title{font-size:17px;font-weight:800;color:var(--navy);min-width:180px;text-align:center;text-transform:capitalize}
+  .cal-legend{display:flex;gap:14px;font-size:12px;color:var(--gray-500);align-items:center}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .cal-dow{font-size:11px;font-weight:800;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em;text-align:center;padding:6px 0}
+  .cal-cell{background:#fff;border:1px solid var(--gray-200);border-radius:8px;min-height:104px;padding:6px 7px;display:flex;flex-direction:column;gap:4px;overflow:hidden}
+  .cal-cell.empty{background:transparent;border:none}
+  .cal-cell.today{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+  .cal-num{font-size:12px;font-weight:700;color:var(--gray-500);align-self:flex-end}
+  .cal-cell.today .cal-num{color:var(--gold)}
+  .cal-ev{font-size:11px;font-weight:600;color:#fff;background:var(--navy);border-radius:5px;padding:3px 6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+  .cal-ev.csti{background:#7c3aed}
+  .cal-ev:hover{opacity:.85}
+  .cal-more{font-size:10.5px;color:var(--gray-400);font-weight:700}
+
+  /* APPROVAL CARDS */
+  .appr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+  .appr-card{background:#fff;border:1px solid var(--gray-200);border-left:4px solid var(--gold-light);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .appr-card .ac-head{padding:14px 18px 10px;cursor:pointer}
+  .appr-card .ac-id{font-size:11.5px;font-weight:800;color:var(--gold);letter-spacing:.04em}
+  .appr-card .ac-title{font-size:15px;font-weight:700;color:var(--navy);margin-top:3px}
+  .appr-card .ac-meta{font-size:12.5px;color:var(--gray-500);margin-top:6px;display:flex;flex-wrap:wrap;gap:4px 14px}
+  .appr-card .ac-actions{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--gray-200);background:var(--gray-100)}
+  .appr-card .ac-actions .btn{flex:1;justify-content:center}
+
+  /* CATALOG */
+  .cat-layout{display:grid;grid-template-columns:1.3fr 1fr;gap:18px}
+  .pick-list{max-height:420px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:8px}
+  .pick-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--gray-100);cursor:pointer}
+  .pick-row:hover{background:var(--gray-100)}
+  .pick-row input{width:17px;height:17px;accent-color:var(--navy);flex-shrink:0}
+  .pick-row .pr-main{flex:1;min-width:0}
+  .pick-row .pr-t{font-size:13px;font-weight:600;color:var(--gray-800)}
+  .pick-row .pr-s{font-size:11.5px;color:var(--gray-400)}
+  .cat-preview{border:1px dashed var(--gray-300);border-radius:8px;padding:16px;font-size:13px;color:var(--gray-600);background:#fff;min-height:200px}
+  .cat-saved-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--gray-200);border-radius:8px;margin-bottom:8px}
+  .cat-saved-item .cs-main{flex:1}
+  .cat-saved-item .cs-t{font-weight:700;color:var(--navy);font-size:13.5px}
+  .cat-saved-item .cs-s{font-size:11.5px;color:var(--gray-400)}
+
+  /* MODAL */
+  .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center;padding:16px}
+  .modal-backdrop.open{display:flex}
+  .modal{background:var(--white);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);width:100%;max-width:680px;max-height:90vh;overflow-y:auto}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid var(--gray-200);position:sticky;top:0;background:var(--white);z-index:10}
+  .modal-header h3{font-size:16px;font-weight:700;color:var(--navy)}
+  .modal-close{width:32px;height:32px;border:none;background:var(--gray-200);border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .1s}
+  .modal-close:hover{background:var(--gray-300)}
+  .modal-body{padding:20px 24px 24px}
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .detail-item{display:flex;flex-direction:column;gap:3px}
+  .detail-item.span2{grid-column:span 2}
+  .detail-label{font-size:11px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.06em}
+  .detail-value{font-size:13.5px;color:var(--gray-800);font-weight:500}
+  .detail-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+  .btn-approve,.btn-reject,.btn-neutral{padding:10px 20px;border:none;border-radius:8px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s}
+  .btn-approve{background:var(--green);color:#fff} .btn-approve:hover{background:#1e5538}
+  .btn-reject{background:var(--red);color:#fff} .btn-reject:hover{background:#a93226}
+  .btn-neutral{background:var(--gray-200);color:var(--gray-600)} .btn-neutral:hover{background:var(--gray-300)}
+
+  /* EMPTY */
+  .empty-state{text-align:center;padding:40px 20px;color:var(--gray-400)}
+  .empty-state .big-icon{font-size:40px;margin-bottom:12px}
+
+  /* TOAST */
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green);color:#fff;padding:13px 22px;border-radius:10px;font-weight:600;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:999;transition:transform .35s ease,opacity .35s ease;opacity:0;pointer-events:none;white-space:nowrap;max-width:90vw}
+  #toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  #toast.err{background:var(--red)}
+
+  @media(max-width:1100px){.stats-row{grid-template-columns:repeat(3,1fr)}.charts-row{grid-template-columns:1fr 1fr}.cat-layout{grid-template-columns:1fr}}
+  @media(max-width:760px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}.stats-row{grid-template-columns:1fr 1fr}.charts-row{grid-template-columns:1fr}.quick-actions{grid-template-columns:1fr 1fr}.form-row{grid-template-columns:1fr}.cal-cell{min-height:78px}}
+
+  /* PRINT (vista de impresión usa ventana aparte, pero por si acaso) */
+  @media print{.sidebar,.topbar,.quick-actions,.filter-bar,.pagination,#toast{display:none!important}.main{margin-left:0}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-logo">P</div>
+    <div class="brand-text"><strong>PUCMM</strong><span>Decanato de Postgrado</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')"><span class="icon">🏠</span> Dashboard</div>
+    <div class="nav-item" data-view="solicitudes" onclick="switchView('solicitudes')"><span class="icon">📋</span> Solicitudes <span class="nav-badge" id="nb-solicitudes">–</span></div>
+    <div class="nav-item" data-view="calendario" onclick="switchView('calendario')"><span class="icon">📅</span> Calendario</div>
+    <div class="nav-item" data-view="aprobaciones" onclick="switchView('aprobaciones')"><span class="icon">✅</span> Aprobaciones <span class="nav-badge" id="nb-pending">–</span></div>
+    <div class="nav-section">Gestión</div>
+    <div class="nav-item" data-view="reportes" onclick="switchView('reportes')"><span class="icon">📊</span> Reportes</div>
+    <div class="nav-item" data-view="catalogos" onclick="switchView('catalogos')"><span class="icon">🗂️</span> Catálogos</div>
+    <div class="nav-item" data-view="usuarios" onclick="switchView('usuarios')"><span class="icon">👤</span> Usuarios</div>
+    <div class="nav-section">Sistema</div>
+    <div class="nav-item" data-view="config" onclick="switchView('config')"><span class="icon">⚙️</span> Configuración</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div>© 2026 PUCMM</div>
+    <div><a href="mailto:DecanatodePostgrado@pucmm.edu.do">DecanatodePostgrado@pucmm.edu.do</a></div>
+    <div>809-535-0111 ext. 2338</div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 id="pageTitle">Dashboard</h1>
+      <p id="pageSub">Gestión de solicitudes de actividades académicas</p>
+    </div>
+    <div class="topbar-right">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Buscar…" id="searchInput" oninput="applyFilters()">
+      </div>
+      <button class="refresh-btn" id="refreshBtn" onclick="loadData()" title="Actualizar desde Google Sheets">🔄</button>
+      <div class="bell-wrap">
+        <button class="bell-btn" id="bellBtn" onclick="toggleBell(event)" title="Notificaciones">🔔
+          <span class="bell-count hidden" id="bellCount">0</span>
+        </button>
+        <div class="bell-dropdown" id="bellDropdown">
+          <div class="bell-dd-head"><span>Solicitudes pendientes</span><span id="bellHeadCount" style="color:var(--gray-400);font-weight:600">0</span></div>
+          <div class="bell-dd-body" id="bellBody"></div>
+          <div class="bell-dd-foot" onclick="switchView('aprobaciones');closeBell()">Ver todas las aprobaciones →</div>
+        </div>
+      </div>
+      <div class="topbar-user">
+        <div class="user-avatar" id="userAvatar">MP</div>
+        <div><div class="user-name" id="userName">María Pérez</div><div class="user-role" id="userRole">Coordinadora</div></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="sync-notice" id="syncNotice">
+      📊 Cargando datos desde Google Sheets… <span id="syncStatus">Conectando…</span>
+    </div>
+
+    <!-- ════════ DASHBOARD ════════ -->
+    <section class="view active" id="view-dashboard">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-top"><div><div class="stat-label">Total solicitudes</div><div class="stat-value" id="s-total">–</div></div><div class="stat-icon si-b">📄</div></div><div class="stat-sub">Todas las solicitudes</div></div>
+        <div class="stat-card"><div class="stat-top"><div><div class="stat-label">Pendientes</div><div class="stat-value" id="s-pending">–</div></div><div class="stat-icon si-y">⏳</div></div><div class="stat-sub">Por revisar</div></div>
+        <div class="stat-card"><div class="stat-top"><div><div class="stat-label">Aprobadas</div><div class="stat-value" id="s-approved">–</div></div><div class="stat-icon si-g">✅</div></div><div class="stat-sub">Este período</div></div>
+        <div class="stat-card"><div class="stat-top"><div><div class="stat-label">Rechazadas</div><div class="stat-value" id="s-rejected">–</div></div><div class="stat-icon si-r">❌</div></div><div class="stat-sub">Este período</div></div>
+        <div class="stat-card"><div class="stat-top"><div><div class="stat-label">Próximos 30 días</div><div class="stat-value" id="s-upcoming">–</div></div><div class="stat-icon si-p">📆</div></div><div class="stat-sub">Eventos programados</div></div>
+      </div>
+
+      <div class="charts-row">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Por estado</span></div>
+          <div class="card-body">
+            <div class="donut-wrap">
+              <svg width="110" height="110" viewBox="0 0 110 110">
+                <circle cx="55" cy="55" r="40" fill="none" stroke="#e2e6ed" stroke-width="16"/>
+                <circle id="d-approved" cx="55" cy="55" r="40" fill="none" stroke="#276749" stroke-width="16" stroke-dasharray="0 251.3" transform="rotate(-90 55 55)" style="transition:stroke-dasharray .6s"/>
+                <circle id="d-pending"  cx="55" cy="55" r="40" fill="none" stroke="#f0b429" stroke-width="16" stroke-dasharray="0 251.3" transform="rotate(-90 55 55)" style="transition:stroke-dasharray .6s"/>
+                <circle id="d-rejected" cx="55" cy="55" r="40" fill="none" stroke="#c0392b" stroke-width="16" stroke-dasharray="0 251.3" transform="rotate(-90 55 55)" style="transition:stroke-dasharray .6s"/>
+                <text x="55" y="52" text-anchor="middle" font-size="16" font-weight="800" fill="#1a2e5a" id="d-total">–</text>
+                <text x="55" y="66" text-anchor="middle" font-size="9" fill="#9aa3b2">Total</text>
+              </svg>
+              <div class="donut-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:#276749"></div><span class="legend-label">Aprobadas</span><span class="legend-pct" id="l-approved">–</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background:#f0b429"></div><span class="legend-label">Pendientes</span><span class="legend-pct" id="l-pending">–</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background:#c0392b"></div><span class="legend-label">Rechazadas</span><span class="legend-pct" id="l-rejected">–</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Solicitudes por campus</span></div>
+          <div class="card-body"><div class="bar-chart" id="barChart"><div style="color:var(--gray-400);font-size:13px;align-self:center">Cargando…</div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Próximos eventos</span></div>
+          <div class="card-body" style="padding:12px 20px"><div class="event-list" id="eventList"><div style="color:var(--gray-400);font-size:13px;padding:12px 0">Cargando…</div></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Solicitudes recientes</span>
+          <button class="btn btn-primary btn-sm" onclick="switchView('solicitudes')">Ver todas →</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Actividad</th><th>Solicitante</th><th>Campus</th><th>Tipo</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="recentBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <button class="qa-btn" onclick="openForm()"><span class="icon">📝</span><span class="label">Nueva solicitud</span><span class="desc">Abrir formulario</span></button>
+        <button class="qa-btn" onclick="loadData()"><span class="icon">🔄</span><span class="label">Sincronizar</span><span class="desc">Actualizar desde Sheets</span></button>
+        <button class="qa-btn" onclick="switchView('reportes')"><span class="icon">📊</span><span class="label">Reportes</span><span class="desc">Generar e imprimir</span></button>
+        <button class="qa-btn" onclick="openSheet()"><span class="icon">📋</span><span class="label">Abrir Sheets</span><span class="desc">Ver hoja de cálculo</span></button>
+      </div>
+    </section>
+
+    <!-- ════════ SOLICITUDES ════════ -->
+    <section class="view" id="view-solicitudes">
+      <div class="view-head">
+        <div><h2>Todas las solicitudes</h2><p id="sol-count">–</p></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Exportar CSV</button>
+          <button class="btn btn-primary btn-sm" onclick="openForm()">＋ Nueva</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="filter-bar">
+          <span class="filter-label">Filtrar:</span>
+          <select class="filter-select" id="f-estado" onchange="applyFilters()"><option value="">Estado: Todos</option><option>Pendiente</option><option>Aprobado</option><option>Rechazado</option><option>Cancelado</option></select>
+          <select class="filter-select" id="f-campus" onchange="applyFilters()"><option value="">Campus: Todos</option><option>CSD</option><option>CSTI</option></select>
+          <select class="filter-select" id="f-tipo" onchange="applyFilters()"><option value="">Tipo: Todos</option><option>Conferencia</option><option>Seminario</option><option>Jornada</option><option>Capacitación</option><option>Panel</option><option>Congreso</option></select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Actividad</th><th>Solicitante</th><th>Campus</th><th>Tipo</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+          <div id="emptyState" class="empty-state" style="display:none"><div class="big-icon">📭</div><p>Sin resultados.</p></div>
+        </div>
+        <div class="pagination"><span class="page-info" id="pageInfo">–</span><div class="page-btns" id="pageBtns"></div></div>
+      </div>
+    </section>
+
+    <!-- ════════ CALENDARIO ════════ -->
+    <section class="view" id="view-calendario">
+      <div class="view-head">
+        <div><h2>Calendario de eventos aprobados</h2><p>Actividades aprobadas de CSD y CSTI</p></div>
+      </div>
+      <div class="card"><div class="card-body">
+        <div class="cal-toolbar">
+          <div class="cal-nav">
+            <button onclick="calMove(-1)">‹</button>
+            <div class="cal-title" id="calTitle">—</div>
+            <button onclick="calMove(1)">›</button>
+            <button class="btn btn-ghost btn-sm" onclick="calToday()" style="margin-left:6px">Hoy</button>
+          </div>
+          <div class="cal-legend">
+            <span><span class="legend-dot" style="background:#1a2e5a;display:inline-block;vertical-align:middle"></span> CSD</span>
+            <span><span class="legend-dot" style="background:#7c3aed;display:inline-block;vertical-align:middle"></span> CSTI</span>
+          </div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div></div>
+    </section>
+
+    <!-- ════════ APROBACIONES ════════ -->
+    <section class="view" id="view-aprobaciones">
+      <div class="view-head">
+        <div><h2>Aprobaciones pendientes</h2><p id="appr-count">Solicitudes que esperan revisión</p></div>
+      </div>
+      <div id="apprGrid" class="appr-grid"></div>
+      <div id="apprEmpty" class="empty-state" style="display:none"><div class="big-icon">🎉</div><p>No hay solicitudes pendientes. Todo al día.</p></div>
+    </section>
+
+    <!-- ════════ REPORTES ════════ -->
+    <section class="view" id="view-reportes">
+      <div class="view-head">
+        <div><h2>Reportes</h2><p>Genera un reporte y envíalo a impresión o PDF</p></div>
+      </div>
+      <div class="card"><div class="card-body">
+        <div class="form-row">
+          <div class="form-field"><label>Tipo de reporte</label>
+            <select id="rep-tipo"><option value="general">General (todas)</option><option value="estado">Por estado</option><option value="campus">Por campus</option><option value="rango">Por rango de fechas</option><option value="aprobados">Solo aprobados (agenda)</option></select>
+          </div>
+          <div class="form-field"><label>Filtro adicional</label>
+            <select id="rep-filtro"><option value="">— (según el tipo)</option><option>Pendiente</option><option>Aprobado</option><option>Rechazado</option><option>Cancelado</option><option>CSD</option><option>CSTI</option></select>
+          </div>
+          <div class="form-field"><label>Desde</label><input type="date" id="rep-desde"></div>
+          <div class="form-field"><label>Hasta</label><input type="date" id="rep-hasta"></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+          <button class="btn btn-primary" onclick="previewReport()">👁 Previsualizar</button>
+          <button class="btn btn-gold" onclick="printReport()">🖨 Imprimir / PDF</button>
+          <button class="btn btn-ghost" onclick="exportCSV()">⬇ Exportar CSV</button>
+        </div>
+      </div></div>
+      <div class="card" style="margin-top:18px"><div class="card-body" id="repPreview">
+        <div class="empty-state"><div class="big-icon">📊</div><p>Elige las opciones y pulsa <b>Previsualizar</b>.</p></div>
+      </div></div>
+    </section>
+
+    <!-- ════════ CATÁLOGOS ════════ -->
+    <section class="view" id="view-catalogos">
+      <div class="view-head">
+        <div><h2>Catálogos de eventos</h2><p>Arma una selección de eventos y compártela por correo</p></div>
+      </div>
+      <div class="cat-layout">
+        <div class="card"><div class="card-body">
+          <div class="form-row" style="grid-template-columns:1fr">
+            <div class="form-field full"><label>Título del catálogo</label><input type="text" id="cat-title" placeholder="Ej: Agenda académica – Julio 2026"></div>
+          </div>
+          <div class="filter-bar" style="border:none;padding:0 0 10px">
+            <span class="filter-label">Mostrar:</span>
+            <select class="filter-select" id="cat-filter" onchange="renderCatPicker()"><option value="Aprobado">Solo aprobados</option><option value="">Todos</option><option value="Pendiente">Pendientes</option></select>
+            <button class="btn btn-ghost btn-sm" onclick="catSelectAll(true)">Todos</button>
+            <button class="btn btn-ghost btn-sm" onclick="catSelectAll(false)">Ninguno</button>
+          </div>
+          <div class="pick-list" id="catPicker"></div>
+        </div></div>
+        <div>
+          <div class="card"><div class="card-body">
+            <div class="form-field full" style="margin-bottom:12px"><label>Correo del destinatario</label><input type="email" id="cat-email" placeholder="se escribe al momento del envío"></div>
+            <div class="cat-preview" id="catPreview">Selecciona eventos para ver la vista previa…</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+              <button class="btn btn-primary btn-sm" onclick="catShareEmail()">✉ Compartir por correo</button>
+              <button class="btn btn-gold btn-sm" onclick="catPrint()">🖨 Imprimir</button>
+              <button class="btn btn-ghost btn-sm" onclick="catSave()">💾 Guardar</button>
+            </div>
+          </div></div>
+          <div class="card" style="margin-top:14px"><div class="card-header"><span class="card-title">Catálogos guardados</span></div>
+            <div class="card-body" id="catSaved"><p style="color:var(--gray-400);font-size:13px">Aún no has guardado catálogos.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ USUARIOS ════════ -->
+    <section class="view" id="view-usuarios">
+      <div class="view-head">
+        <div><h2>Usuarios</h2><p>Personas con acceso al panel</p></div>
+        <button class="btn btn-primary btn-sm" onclick="openUserModal()">＋ Agregar usuario</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Acciones</th></tr></thead>
+            <tbody id="usersBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ CONFIGURACIÓN ════════ -->
+    <section class="view" id="view-config">
+      <div class="view-head">
+        <div><h2>Configuración</h2><p>Conexión con Google Sheets y edición de eventos</p></div>
+      </div>
+      <div class="card"><div class="card-header"><span class="card-title">Conexión</span></div><div class="card-body">
+        <div class="form-field full" style="margin-bottom:14px"><label>URL del Apps Script (Web App)</label><input type="text" id="cfg-script" placeholder="https://script.google.com/macros/s/…/exec"></div>
+        <div class="form-field full" style="margin-bottom:14px"><label>Enlace de la Google Sheet</label><input type="text" id="cfg-sheet" placeholder="https://docs.google.com/spreadsheets/d/…/edit"></div>
+        <div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="saveConfig()">💾 Guardar conexión</button><button class="btn btn-ghost btn-sm" onclick="resetConfig()">Restablecer</button></div>
+        <p style="font-size:12px;color:var(--gray-400);margin-top:10px">Se guarda en este navegador. Tras guardar, se recargan los datos automáticamente.</p>
+      </div></div>
+
+      <div class="card" style="margin-top:18px"><div class="card-header"><span class="card-title">Editar un evento</span></div><div class="card-body">
+        <div class="form-field full" style="margin-bottom:14px"><label>Selecciona el evento</label><select id="cfg-event" onchange="loadEventToEdit()"><option value="">—</option></select></div>
+        <div id="cfg-edit-fields" style="display:none">
+          <div class="form-row">
+            <div class="form-field"><label>Fecha</label><input type="date" id="e-fecha"></div>
+            <div class="form-field"><label>Hora</label><input type="time" id="e-hora"></div>
+            <div class="form-field"><label>Estado</label><select id="e-estado"><option>Pendiente</option><option>Aprobado</option><option>Rechazado</option><option>Cancelado</option></select></div>
+            <div class="form-field"><label>Campus</label><select id="e-campus"><option>CSD</option><option>CSTI</option></select></div>
+            <div class="form-field full"><label>Descripción</label><textarea id="e-desc" rows="2"></textarea></div>
+            <div class="form-field"><label>Espacio CSD</label><input type="text" id="e-csd"></div>
+            <div class="form-field"><label>Espacio CSTI</label><input type="text" id="e-csti"></div>
+            <div class="form-field full"><label>Comentarios</label><textarea id="e-coment" rows="2"></textarea></div>
+          </div>
+          <button class="btn btn-green btn-sm" onclick="saveEventEdit()">💾 Guardar cambios</button>
+        </div>
+      </div></div>
+    </section>
+  </div>
+</div>
+
+<!-- MODAL detalle -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header"><h3 id="modalTitle">Detalle</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- MODAL usuario -->
+<div class="modal-backdrop" id="userBackdrop" onclick="if(event.target===this)closeUserModal()">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header"><h3 id="userModalTitle">Agregar usuario</h3><button class="modal-close" onclick="closeUserModal()">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="u-id">
+      <div class="form-field" style="margin-bottom:12px"><label>Nombre</label><input type="text" id="u-name" placeholder="Nombre completo"></div>
+      <div class="form-field" style="margin-bottom:12px"><label>Correo</label><input type="email" id="u-email" placeholder="usuario@pucmm.edu.do"></div>
+      <div class="form-field" style="margin-bottom:18px"><label>Rol</label><select id="u-role"><option>Coordinador(a)</option><option>Decano(a)</option><option>Asistente</option><option>Administrador(a)</option><option>Visor</option></select></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="closeUserModal()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="saveUser()">Guardar</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════ CONFIGURACIÓN ═══════════════
+// Valores por defecto. Se pueden cambiar en la pestaña "Configuración".
+const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDdnGFczJ0MPdJiR1NNlTiuuX7x8jRuOWfAL5NDbEzcN-jYjCZJrKAOHIdEbsA4bPjqg/exec';
+const DEFAULT_SHEET_URL  = 'https://docs.google.com/spreadsheets/d/1yHKEV49IVnaBalnpqUMhshhXron2cm6zp07jYIMKAJU/edit?gid=1441159761#gid=1441159761';
+
+// ── almacenamiento local seguro (no rompe si el navegador lo bloquea) ──
+const store = {
+  get(k, def){ try{ const v=localStorage.getItem(k); return v===null?def:JSON.parse(v);}catch(e){ return (mem[k]!==undefined?mem[k]:def);} },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){ mem[k]=v; } }
+};
+const mem = {};
+
+let APPS_SCRIPT_URL = store.get('cfg_script', DEFAULT_SCRIPT_URL);
+let SHEET_URL       = store.get('cfg_sheet', DEFAULT_SHEET_URL);
+
+const MONTHS = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+const MONTHS_FULL = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+let allData = [], filtered = [], currentPage = 1;
+const PAGE_SIZE = 10;
+let lastPending = null;        // para detectar solicitudes nuevas
+let calRef = new Date();       // mes mostrado en calendario
+let currentView = 'dashboard';
+
+function badgeClass(e){return e==='Aprobado'?'ba':e==='Rechazado'?'br':e==='Cancelado'?'bc':'bp';}
+function badgeLabel(e){return e||'Pendiente';}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function parseFecha(s){ if(!s) return null; if(s instanceof Date) return s; const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return new Date(+m[1],+m[2]-1,+m[3]); const d=new Date(s); return isNaN(d)?null:d; }
+function fmtFecha(s){ const d=parseFecha(s); return d?d.toLocaleDateString('es-DO',{day:'2-digit',month:'2-digit',year:'numeric'}):'–'; }
+
+function showToast(msg, err){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='show'+(err?' err':'');
+  setTimeout(()=>t.className=err?'err':'',3500);
+}
+
+// ═══════════════ ROUTER ═══════════════
+const TITLES = {
+  dashboard:['Dashboard','Gestión de solicitudes de actividades académicas'],
+  solicitudes:['Solicitudes','Listado completo de solicitudes'],
+  calendario:['Calendario','Eventos aprobados de CSD y CSTI'],
+  aprobaciones:['Aprobaciones','Solicitudes pendientes de revisión'],
+  reportes:['Reportes','Genera e imprime reportes'],
+  catalogos:['Catálogos','Comparte selecciones de eventos'],
+  usuarios:['Usuarios','Personas con acceso al panel'],
+  config:['Configuración','Conexión y edición de eventos']
+};
+function switchView(name){
+  currentView=name;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.view===name));
+  document.getElementById('pageTitle').textContent=TITLES[name][0];
+  document.getElementById('pageSub').textContent=TITLES[name][1];
+  closeBell();
+  if(name==='calendario') renderCalendar();
+  if(name==='aprobaciones') renderApprovals();
+  if(name==='catalogos'){ renderCatPicker(); renderSavedCatalogs(); }
+  if(name==='usuarios') renderUsers();
+  if(name==='config') fillConfig();
+  if(name==='solicitudes'){ currentPage=1; applyFilters(); }
+}
+
+// ═══════════════ CARGA DE DATOS ═══════════════
+async function loadData(){
+  const btn=document.getElementById('refreshBtn'); btn.classList.add('spinning');
+  document.getElementById('syncStatus').textContent='Actualizando…';
+  try{
+    const res=await fetch(APPS_SCRIPT_URL+'?action=getAll',{cache:'no-store'});
+    const json=await res.json();
+    allData=json.data||[];
+    const n=document.getElementById('syncNotice');
+    n.style.background='#d4edda'; n.style.borderColor='#a3d9a5'; n.style.color='#276749';
+    document.getElementById('syncStatus').innerHTML=
+      `✅ ${allData.length} registros · actualizado ${new Date().toLocaleTimeString('es-DO')} · <a onclick="loadData()">Actualizar</a>`;
+  }catch(e){
+    document.getElementById('syncStatus').innerHTML=
+      `⚠️ Sin conexión. <a onclick="loadData()">Reintentar</a> · Verifica la URL en Configuración.`;
+    const n=document.getElementById('syncNotice');
+    n.style.background='#fde8e6'; n.style.borderColor='#fca5a5'; n.style.color='#c0392b';
+    if(allData.length===0) loadDemoData();
+  }
+  btn.classList.remove('spinning');
+  detectNew();
+  renderEverything();
+}
+
+function detectNew(){
+  const pending=allData.filter(r=>(r.estado||'Pendiente')==='Pendiente').length;
+  if(lastPending!==null && pending>lastPending){
+    const bell=document.getElementById('bellBtn'); bell.classList.add('ring');
+    setTimeout(()=>bell.classList.remove('ring'),700);
+    showToast(`🔔 ${pending-lastPending} solicitud(es) nueva(s) por revisar`);
+  }
+  lastPending=pending;
+}
+
+function renderEverything(){
+  applyFilters(); updateStats(); renderCharts(); renderRecent();
+  renderBell(); updateBadges();
+  if(currentView==='calendario') renderCalendar();
+  if(currentView==='aprobaciones') renderApprovals();
+  if(currentView==='catalogos') renderCatPicker();
+  if(currentView==='config') fillEventSelect();
+}
+
+function updateBadges(){
+  const pending=allData.filter(r=>(r.estado||'Pendiente')==='Pendiente').length;
+  const sb=document.getElementById('nb-pending'); sb.textContent=pending; sb.classList.toggle('zero',pending===0);
+  const ss=document.getElementById('nb-solicitudes'); ss.textContent=allData.length; ss.classList.toggle('zero',allData.length===0);
+}
+
+function loadDemoData(){
+  allData=[
+    {id:'SOL-001',solicitante:'Juan Rodríguez',correo:'jrodriguez@pucmm.edu.do',campus:'CSD',tipo:'Conferencia',descripcion:'Conferencia: Innovación Educativa',fecha:'2026-06-20',hora:'09:00',duracion:'2 horas',programa:'Educación Avanzada',finalidad:'Propósitos académicos',publico:'Estudiantes de Postgrado',panelistas:'Dr. Ramón García',invitados:'80',espacio_csd:'Auditorio 1, Edificio A2 (190–200 personas)',estado:'Pendiente',timestamp:'2026-06-10T08:00:00Z'},
+    {id:'SOL-002',solicitante:'Ana Martínez',correo:'amartinez@pucmm.edu.do',campus:'CSTI',tipo:'Seminario',descripcion:'Seminario de Gestión Pública',fecha:'2026-06-22',hora:'14:00',duracion:'3 horas',programa:'Administración Pública',finalidad:'Ambos',publico:'Docentes de Postgrado',panelistas:'Lic. Carmen Núñez',invitados:'45',espacio_csti:'Auditorio Biblioteca PUCMM (75 personas)',estado:'Pendiente',timestamp:'2026-06-09T09:00:00Z'},
+    {id:'SOL-003',solicitante:'Carlos Gómez',correo:'cgomez@pucmm.edu.do',campus:'CSD',tipo:'Jornada',descripcion:'Jornada de Salud Mental',fecha:'2026-06-25',hora:'08:00',duracion:'Jornada completa (8 horas)',programa:'Salud Pública',finalidad:'Propósitos académicos',publico:'Estudiantes y docentes de Postgrado',panelistas:'Dra. Laura Reyes',invitados:'120',espacio_csd:'Cafetería de Postgrado (120 personas máximo)',estado:'Aprobado',timestamp:'2026-06-08T10:00:00Z'},
+    {id:'SOL-004',solicitante:'Laura Fernández',correo:'lfernandez@pucmm.edu.do',campus:'CSTI',tipo:'Panel',descripcion:'Panel: Economía Global',fecha:'2026-06-28',hora:'10:00',duracion:'2 horas',programa:'Economía Empresarial',finalidad:'Promoción del programa',publico:'Otros',panelistas:'Ing. Pedro Rodas',invitados:'60',espacio_csti:'Auditorio TEP PUCMM (150 personas)',estado:'Aprobado',timestamp:'2026-06-07T11:00:00Z'},
+    {id:'SOL-005',solicitante:'Pedro Sánchez',correo:'psanchez@pucmm.edu.do',campus:'CSD',tipo:'Capacitación',descripcion:'Capacitación en Docencia',fecha:'2026-07-02',hora:'13:00',duracion:'Media jornada (4 horas)',programa:'Educación Avanzada',finalidad:'Propósitos académicos',publico:'Docentes de Postgrado',panelistas:'Prof. Ana Jiménez',invitados:'35',estado:'Rechazado',timestamp:'2026-06-06T12:00:00Z'},
+    {id:'SOL-006',solicitante:'María Torres',correo:'mtorres@pucmm.edu.do',campus:'CSTI',tipo:'Congreso',descripcion:'Congreso IA en Educación',fecha:'2026-07-05',hora:'09:00',duracion:'Jornada completa (8 horas)',programa:'Tecnología Educativa',finalidad:'Ambos',publico:'Estudiantes y docentes de Postgrado',panelistas:'Dr. Luis Medina',invitados:'200',espacio_csti:'Teatro Universitario (540 personas)',estado:'Aprobado',timestamp:'2026-06-05T08:30:00Z'}
+  ];
+}
+
+// ═══════════════ STATS / CHARTS ═══════════════
+function updateStats(){
+  const total=allData.length;
+  const pending=allData.filter(r=>r.estado==='Pendiente'||!r.estado).length;
+  const approved=allData.filter(r=>r.estado==='Aprobado').length;
+  const rejected=allData.filter(r=>r.estado==='Rechazado').length;
+  const now=new Date();
+  const upcoming=allData.filter(r=>{const d=parseFecha(r.fecha);if(!d)return false;const diff=(d-now)/86400000;return diff>=-0.5&&diff<=30;}).length;
+  document.getElementById('s-total').textContent=total;
+  document.getElementById('s-pending').textContent=pending;
+  document.getElementById('s-approved').textContent=approved;
+  document.getElementById('s-rejected').textContent=rejected;
+  document.getElementById('s-upcoming').textContent=upcoming;
+}
+
+function renderCharts(){
+  const total=allData.length||1;
+  const approved=allData.filter(r=>r.estado==='Aprobado').length;
+  const pending=allData.filter(r=>r.estado==='Pendiente'||!r.estado).length;
+  const rejected=allData.filter(r=>r.estado==='Rechazado').length;
+  const C=251.3;
+  const segA=approved/total*C, segP=pending/total*C, segR=rejected/total*C;
+  const set=(id,len,off)=>{const el=document.getElementById(id);el.setAttribute('stroke-dasharray',`${len} ${C-len}`);el.setAttribute('stroke-dashoffset',off);};
+  set('d-approved',segA,0); set('d-pending',segP,-segA); set('d-rejected',segR,-(segA+segP));
+  document.getElementById('d-total').textContent=allData.length;
+  const pct=v=>Math.round(v/total*100)+'%';
+  document.getElementById('l-approved').textContent=pct(approved);
+  document.getElementById('l-pending').textContent=pct(pending);
+  document.getElementById('l-rejected').textContent=pct(rejected);
+
+  const csd=allData.filter(r=>r.campus==='CSD').length, csti=allData.filter(r=>r.campus==='CSTI').length;
+  const mx=Math.max(csd,csti,1);
+  document.getElementById('barChart').innerHTML=
+    `<div class="bar-col"><div class="bar-val">${csd}</div><div class="bar-bar" style="height:${csd/mx*100}px;background:linear-gradient(180deg,#2a4080,#1a2e5a)"></div><div class="bar-label">CSD</div></div>`+
+    `<div class="bar-col"><div class="bar-val">${csti}</div><div class="bar-bar" style="height:${csti/mx*100}px;background:linear-gradient(180deg,#9061f9,#7c3aed)"></div><div class="bar-label">CSTI</div></div>`;
+
+  const now=new Date();
+  const up=allData.filter(r=>{const d=parseFecha(r.fecha);return d&&d>=new Date(now.toDateString());}).sort((a,b)=>parseFecha(a.fecha)-parseFecha(b.fecha)).slice(0,5);
+  const el=document.getElementById('eventList');
+  el.innerHTML=up.length?up.map(r=>{const d=parseFecha(r.fecha);return `<div class="event-item" onclick="openModal('${r.id}')"><div class="event-date"><div class="month">${MONTHS[d.getMonth()]}</div><div class="day">${d.getDate()}</div></div><div class="event-info"><div class="event-name">${esc(r.descripcion||r.tipo)}</div><div class="event-meta">${esc(r.campus||'')} · ${esc(r.hora||'')} · <span class="badge ${badgeClass(r.estado)}">${badgeLabel(r.estado)}</span></div></div></div>`;}).join(''):'<div style="color:var(--gray-400);font-size:13px;padding:12px 0">Sin eventos próximos.</div>';
+}
+
+// ═══════════════ TABLAS ═══════════════
+function rowHtml(r){
+  return `<tr onclick="openModal('${r.id}')">
+    <td class="id">${esc(r.id)||'–'}</td>
+    <td class="name">${esc(r.descripcion||r.tipo)||'–'}</td>
+    <td>${esc(r.solicitante)}</td>
+    <td>${esc(r.campus)}</td>
+    <td>${esc(r.tipo)}</td>
+    <td>${fmtFecha(r.fecha)}</td>
+    <td><span class="badge ${badgeClass(r.estado)}">${badgeLabel(r.estado)}</span></td>
+    <td onclick="event.stopPropagation()"><div class="table-actions">
+      <button class="action-btn" title="Ver" onclick="openModal('${r.id}')">👁</button>
+      <button class="action-btn ap" title="Aprobar" onclick="changeStatus('${r.id}','Aprobado')">✔️</button>
+      <button class="action-btn rj" title="Rechazar" onclick="changeStatus('${r.id}','Rechazado')">✖️</button>
+    </div></td></tr>`;
+}
+function renderRecent(){
+  const rows=[...allData].sort((a,b)=>new Date(b.timestamp||0)-new Date(a.timestamp||0)).slice(0,6);
+  document.getElementById('recentBody').innerHTML=rows.length?rows.map(rowHtml).join(''):`<tr><td colspan="8" style="text-align:center;color:var(--gray-400);padding:24px">Sin solicitudes.</td></tr>`;
+}
+function applyFilters(){
+  const q=(document.getElementById('searchInput').value||'').toLowerCase();
+  const fe=document.getElementById('f-estado'), fc=document.getElementById('f-campus'), ft=document.getElementById('f-tipo');
+  const e=fe?fe.value:'', c=fc?fc.value:'', t=ft?ft.value:'';
+  filtered=allData.filter(r=>{
+    if(e&&(r.estado||'Pendiente')!==e) return false;
+    if(c&&r.campus!==c) return false;
+    if(t&&r.tipo!==t) return false;
+    if(q){const blob=`${r.id} ${r.solicitante} ${r.descripcion} ${r.tipo} ${r.campus} ${r.programa} ${r.correo}`.toLowerCase();if(!blob.includes(q))return false;}
+    return true;
+  });
+  document.getElementById('sol-count').textContent=`${filtered.length} de ${allData.length} solicitudes`;
+  currentPage=Math.min(currentPage,Math.max(1,Math.ceil(filtered.length/PAGE_SIZE)));
+  renderTable();
+}
+function renderTable(){
+  const start=(currentPage-1)*PAGE_SIZE, rows=filtered.slice(start,start+PAGE_SIZE);
+  const tb=document.getElementById('tableBody'), empty=document.getElementById('emptyState');
+  if(!rows.length){tb.innerHTML='';empty.style.display='block';document.getElementById('pageInfo').textContent='Sin resultados';document.getElementById('pageBtns').innerHTML='';return;}
+  empty.style.display='none';
+  tb.innerHTML=rows.map(rowHtml).join('');
+  const total=filtered.length;
+  document.getElementById('pageInfo').textContent=`Mostrando ${start+1}–${Math.min(start+PAGE_SIZE,total)} de ${total}`;
+  const pages=Math.ceil(total/PAGE_SIZE), btns=document.getElementById('pageBtns'); btns.innerHTML='';
+  for(let i=1;i<=pages;i++){const b=document.createElement('button');b.className='page-btn'+(i===currentPage?' active':'');b.textContent=i;b.onclick=()=>{currentPage=i;renderTable();};btns.appendChild(b);}
+}
+
+// ═══════════════ MODAL DETALLE ═══════════════
+function detailRows(r){
+  const f=(l,v)=>`<div class="detail-item"><div class="detail-label">${l}</div><div class="detail-value">${esc(v)||'–'}</div></div>`;
+  const f2=(l,v)=>`<div class="detail-item span2"><div class="detail-label">${l}</div><div class="detail-value">${esc(v)||'–'}</div></div>`;
+  return `<div class="detail-grid">
+    ${f('Solicitante',r.solicitante)}${f('Correo',r.correo)}
+    ${f('Campus',r.campus)}${f('Tipo',r.tipo)}
+    ${f('Fecha',fmtFecha(r.fecha))}${f('Hora · Duración',(r.hora||'–')+' · '+(r.duracion||'–'))}
+    ${f('Programa',r.programa)}${f('Invitados',r.invitados)}
+    ${f2('Descripción',r.descripcion)}${f2('Panelistas',r.panelistas)}
+    ${f('Espacio CSD',r.espacio_csd)}${f('Espacio CSTI',r.espacio_csti)}
+    ${f('Mobiliario',r.mobiliario)}${f('Audiovisual',r.audiovisual)}
+    ${f('Refrigerios',r.refrigerios)}${f('Comunicaciones',r.comunicacion)}
+    ${f('Mercadeo',r.mercadeo)}<div class="detail-item"><div class="detail-label">Estado actual</div><div class="detail-value"><span class="badge ${badgeClass(r.estado)}">${badgeLabel(r.estado)}</span></div></div>
+    ${f2('Comentarios',r.comentarios)}
+  </div>`;
+}
+function openModal(id){
+  const r=allData.find(x=>x.id===id); if(!r) return;
+  document.getElementById('modalTitle').textContent=(r.id||'')+' – '+(r.descripcion||r.tipo||'');
+  document.getElementById('modalBody').innerHTML=detailRows(r)+`
+    <div class="detail-actions">
+      <button class="btn-approve" onclick="changeStatus('${r.id}','Aprobado');closeModal()">✔ Aprobar</button>
+      <button class="btn-reject" onclick="changeStatus('${r.id}','Rechazado');closeModal()">✖ Rechazar</button>
+      <button class="btn-neutral" onclick="changeStatus('${r.id}','Cancelado');closeModal()">Cancelar solicitud</button>
+      <button class="btn-neutral" onclick="closeModal()">Cerrar</button>
+    </div>`;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+function closeModal(){document.getElementById('modalBackdrop').classList.remove('open');}
+
+// ═══════════════ CAMBIAR ESTADO ═══════════════
+async function changeStatus(id,status){
+  const item=allData.find(r=>r.id===id); if(!item) return;
+  item.estado=status;
+  renderEverything();
+  if(status==='Aprobado') showToast(`✅ ${id} aprobada · correo enviado a ${item.correo||'el responsable'}`);
+  else showToast(`Solicitud ${id} marcada como ${status}`);
+  try{
+    await fetch(APPS_SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'updateStatus',id,estado:status})});
+  }catch(e){console.warn('No se pudo actualizar en Sheets:',e);}
+}
+
+// ═══════════════ CALENDARIO ═══════════════
+function calMove(d){calRef.setMonth(calRef.getMonth()+d);renderCalendar();}
+function calToday(){calRef=new Date();renderCalendar();}
+function renderCalendar(){
+  const y=calRef.getFullYear(), m=calRef.getMonth();
+  document.getElementById('calTitle').textContent=`${MONTHS_FULL[m]} ${y}`;
+  const first=new Date(y,m,1), startDow=first.getDay(), days=new Date(y,m+1,0).getDate();
+  const today=new Date(); const isToday=d=>d===today.getDate()&&m===today.getMonth()&&y===today.getFullYear();
+  const evs=allData.filter(r=>r.estado==='Aprobado').map(r=>({r,d:parseFecha(r.fecha)})).filter(x=>x.d&&x.d.getFullYear()===y&&x.d.getMonth()===m);
+  const byDay={}; evs.forEach(x=>{(byDay[x.d.getDate()]=byDay[x.d.getDate()]||[]).push(x.r);});
+  let html=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  for(let i=0;i<startDow;i++) html+=`<div class="cal-cell empty"></div>`;
+  for(let d=1;d<=days;d++){
+    const list=byDay[d]||[];
+    const shown=list.slice(0,3).map(r=>`<div class="cal-ev ${r.campus==='CSTI'?'csti':''}" onclick="openModal('${r.id}')" title="${esc(r.descripcion||r.tipo)}">${esc((r.hora?r.hora+' ':'')+(r.descripcion||r.tipo))}</div>`).join('');
+    const more=list.length>3?`<div class="cal-more">+${list.length-3} más</div>`:'';
+    html+=`<div class="cal-cell ${isToday(d)?'today':''}"><div class="cal-num">${d}</div>${shown}${more}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML=html;
+}
+
+// ═══════════════ APROBACIONES ═══════════════
+function renderApprovals(){
+  const pend=allData.filter(r=>(r.estado||'Pendiente')==='Pendiente').sort((a,b)=>new Date(b.timestamp||0)-new Date(a.timestamp||0));
+  const grid=document.getElementById('apprGrid'), empty=document.getElementById('apprEmpty');
+  document.getElementById('appr-count').textContent=`${pend.length} solicitud(es) esperan revisión`;
+  if(!pend.length){grid.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  grid.innerHTML=pend.map(r=>`<div class="appr-card">
+    <div class="ac-head" onclick="openModal('${r.id}')">
+      <div class="ac-id">${esc(r.id)}</div>
+      <div class="ac-title">${esc(r.descripcion||r.tipo)}</div>
+      <div class="ac-meta">
+        <span>👤 ${esc(r.solicitante)}</span>
+        <span class="chip ${r.campus==='CSTI'?'csti':'csd'}">${esc(r.campus)}</span>
+        <span>📅 ${fmtFecha(r.fecha)} ${esc(r.hora||'')}</span>
+        <span>👥 ${esc(r.invitados||'–')}</span>
+      </div>
+    </div>
+    <div class="ac-actions">
+      <button class="btn btn-green btn-sm" onclick="changeStatus('${r.id}','Aprobado')">✔ Aprobar</button>
+      <button class="btn btn-ghost btn-sm" onclick="changeStatus('${r.id}','Rechazado')">✖ Rechazar</button>
+      <button class="btn btn-ghost btn-sm" onclick="openModal('${r.id}')">Ver</button>
+    </div></div>`).join('');
+}
+
+// ═══════════════ NOTIFICACIONES (campana) ═══════════════
+function renderBell(){
+  const pend=allData.filter(r=>(r.estado||'Pendiente')==='Pendiente').sort((a,b)=>new Date(b.timestamp||0)-new Date(a.timestamp||0));
+  const cnt=document.getElementById('bellCount');
+  cnt.textContent=pend.length; cnt.classList.toggle('hidden',pend.length===0);
+  document.getElementById('bellHeadCount').textContent=pend.length;
+  const body=document.getElementById('bellBody');
+  body.innerHTML=pend.length?pend.slice(0,8).map(r=>`<div class="bell-row" onclick="openModal('${r.id}');closeBell()"><div class="t">${esc(r.descripcion||r.tipo)}</div><div class="s">${esc(r.solicitante)} · ${esc(r.campus)} · ${fmtFecha(r.fecha)}</div></div>`).join(''):'<div style="padding:20px;text-align:center;color:var(--gray-400);font-size:13px">No hay pendientes 🎉</div>';
+}
+function toggleBell(e){e.stopPropagation();document.getElementById('bellDropdown').classList.toggle('open');}
+function closeBell(){document.getElementById('bellDropdown').classList.remove('open');}
+document.addEventListener('click',e=>{if(!e.target.closest('.bell-wrap'))closeBell();});
+
+// ═══════════════ REPORTES ═══════════════
+function reportData(){
+  const tipo=document.getElementById('rep-tipo').value, filtro=document.getElementById('rep-filtro').value;
+  const desde=document.getElementById('rep-desde').value, hasta=document.getElementById('rep-hasta').value;
+  let data=[...allData], titulo='Reporte general de solicitudes';
+  if(tipo==='estado'&&filtro){data=data.filter(r=>(r.estado||'Pendiente')===filtro);titulo='Reporte de solicitudes – Estado: '+filtro;}
+  else if(tipo==='campus'&&filtro){data=data.filter(r=>r.campus===filtro);titulo='Reporte de solicitudes – Campus: '+filtro;}
+  else if(tipo==='aprobados'){data=data.filter(r=>r.estado==='Aprobado');titulo='Agenda de eventos aprobados';}
+  else if(tipo==='rango'){
+    const d1=desde?parseFecha(desde):null, d2=hasta?parseFecha(hasta):null;
+    data=data.filter(r=>{const d=parseFecha(r.fecha);if(!d)return false;if(d1&&d<d1)return false;if(d2&&d>d2)return false;return true;});
+    titulo='Reporte por fechas'+(desde?` desde ${fmtFecha(desde)}`:'')+(hasta?` hasta ${fmtFecha(hasta)}`:'');
+  }
+  data.sort((a,b)=>(parseFecha(a.fecha)||0)-(parseFecha(b.fecha)||0));
+  return {data,titulo};
+}
+function reportTableHtml(data){
+  if(!data.length) return '<div class="empty-state"><div class="big-icon">📭</div><p>No hay datos para estas opciones.</p></div>';
+  return `<table><thead><tr><th>ID</th><th>Actividad</th><th>Solicitante</th><th>Campus</th><th>Tipo</th><th>Fecha</th><th>Hora</th><th>Invitados</th><th>Estado</th></tr></thead><tbody>${
+    data.map(r=>`<tr><td class="id">${esc(r.id)}</td><td>${esc(r.descripcion||r.tipo)}</td><td>${esc(r.solicitante)}</td><td>${esc(r.campus)}</td><td>${esc(r.tipo)}</td><td>${fmtFecha(r.fecha)}</td><td>${esc(r.hora||'')}</td><td>${esc(r.invitados||'')}</td><td><span class="badge ${badgeClass(r.estado)}">${badgeLabel(r.estado)}</span></td></tr>`).join('')
+  }</tbody></table>`;
+}
+function previewReport(){
+  const {data,titulo}=reportData();
+  document.getElementById('repPreview').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div><b style="color:var(--navy);font-size:15px">${esc(titulo)}</b><div style="font-size:12.5px;color:var(--gray-400)">${data.length} registro(s)</div></div></div><div class="table-wrap">${reportTableHtml(data)}</div>`;
+}
+function printReport(){
+  const {data,titulo}=reportData();
+  const stats={t:data.length,a:data.filter(r=>r.estado==='Aprobado').length,p:data.filter(r=>(r.estado||'Pendiente')==='Pendiente').length,r:data.filter(r=>r.estado==='Rechazado').length};
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${esc(titulo)}</title><style>
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#2d3748;padding:28px;font-size:12px}
+    .head{display:flex;align-items:center;gap:14px;border-bottom:3px solid #1a2e5a;padding-bottom:14px;margin-bottom:6px}
+    .logo{width:46px;height:46px;background:#c8960c;color:#1a2e5a;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px}
+    h1{font-size:18px;color:#1a2e5a;margin:0}.sub{color:#5a6578;font-size:12px}
+    .meta{font-size:11px;color:#9aa3b2;margin:10px 0 16px}
+    .kpis{display:flex;gap:10px;margin-bottom:16px}
+    .kpi{flex:1;border:1px solid #e2e6ed;border-radius:8px;padding:8px 12px}.kpi b{font-size:20px;color:#1a2e5a;display:block}.kpi span{font-size:11px;color:#5a6578}
+    table{width:100%;border-collapse:collapse;font-size:11px}th{background:#1a2e5a;color:#fff;padding:7px 8px;text-align:left}td{padding:6px 8px;border-bottom:1px solid #e2e6ed}
+    tr:nth-child(even) td{background:#f7f9fc}
+    .b{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+    .ba{background:#d4edda;color:#276749}.bp{background:#fef3cd;color:#b45309}.br{background:#fde8e6;color:#c0392b}.bc{background:#e2e6ed;color:#6b7585}
+    .foot{margin-top:20px;font-size:10px;color:#9aa3b2;border-top:1px solid #e2e6ed;padding-top:10px;display:flex;justify-content:space-between}
+    @media print{.noprint{display:none}}
+  </style></head><body>
+    <div class="head"><div class="logo">P</div><div><h1>Decanato de Postgrado · PUCMM</h1><div class="sub">${esc(titulo)}</div></div></div>
+    <div class="meta">Generado el ${new Date().toLocaleString('es-DO')}</div>
+    <div class="kpis"><div class="kpi"><b>${stats.t}</b><span>Total</span></div><div class="kpi"><b>${stats.a}</b><span>Aprobadas</span></div><div class="kpi"><b>${stats.p}</b><span>Pendientes</span></div><div class="kpi"><b>${stats.r}</b><span>Rechazadas</span></div></div>
+    ${data.length?`<table><thead><tr><th>ID</th><th>Actividad</th><th>Solicitante</th><th>Campus</th><th>Tipo</th><th>Fecha</th><th>Hora</th><th>Invit.</th><th>Estado</th></tr></thead><tbody>${data.map(r=>`<tr><td>${esc(r.id)}</td><td>${esc(r.descripcion||r.tipo)}</td><td>${esc(r.solicitante)}</td><td>${esc(r.campus)}</td><td>${esc(r.tipo)}</td><td>${fmtFecha(r.fecha)}</td><td>${esc(r.hora||'')}</td><td>${esc(r.invitados||'')}</td><td><span class="b ${badgeClass(r.estado)}">${badgeLabel(r.estado)}</span></td></tr>`).join('')}</tbody></table>`:'<p>No hay registros.</p>'}
+    <div class="foot"><span>Decanato de Postgrado · PUCMM</span><span>DecanatodePostgrado@pucmm.edu.do · 809-535-0111 ext. 2338</span></div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},300);}<\/script>
+  </body></html>`);
+  w.document.close();
+}
+
+// ═══════════════ CATÁLOGOS ═══════════════
+function catPool(){
+  const f=document.getElementById('cat-filter').value;
+  let d=[...allData]; if(f) d=d.filter(r=>(r.estado||'Pendiente')===f);
+  return d.sort((a,b)=>(parseFecha(a.fecha)||0)-(parseFecha(b.fecha)||0));
+}
+function renderCatPicker(){
+  const pool=catPool();
+  document.getElementById('catPicker').innerHTML=pool.length?pool.map(r=>`<label class="pick-row"><input type="checkbox" value="${r.id}" onchange="renderCatPreview()"><div class="pr-main"><div class="pr-t">${esc(r.descripcion||r.tipo)}</div><div class="pr-s">${esc(r.campus)} · ${fmtFecha(r.fecha)} ${esc(r.hora||'')} · ${esc(r.solicitante)}</div></div><span class="badge ${badgeClass(r.estado)}">${badgeLabel(r.estado)}</span></label>`).join(''):'<div style="padding:18px;color:var(--gray-400);font-size:13px">No hay eventos para este filtro.</div>';
+  renderCatPreview();
+}
+function catSelectAll(v){document.querySelectorAll('#catPicker input[type=checkbox]').forEach(c=>c.checked=v);renderCatPreview();}
+function catSelected(){return Array.from(document.querySelectorAll('#catPicker input:checked')).map(c=>allData.find(r=>r.id===c.value)).filter(Boolean);}
+function catText(){
+  const title=document.getElementById('cat-title').value||'Catálogo de eventos';
+  const sel=catSelected();
+  let t=title+'\n'+'='.repeat(title.length)+'\n\n';
+  if(!sel.length) return {title,body:'(sin eventos seleccionados)'};
+  sel.forEach((r,i)=>{t+=`${i+1}. ${r.descripcion||r.tipo}\n   Fecha: ${fmtFecha(r.fecha)}  Hora: ${r.hora||'—'}\n   Campus: ${r.campus||'—'}  ·  Tipo: ${r.tipo||'—'}\n   Panelistas: ${r.panelistas||'—'}\n\n`;});
+  t+='—\nDecanato de Postgrado · PUCMM';
+  return {title,body:t};
+}
+function renderCatPreview(){
+  const sel=catSelected(), {body}=catText();
+  document.getElementById('catPreview').innerHTML=sel.length?`<div style="white-space:pre-wrap;font-size:12.5px">${esc(body)}</div>`:'Selecciona eventos para ver la vista previa…';
+}
+function catShareEmail(){
+  const sel=catSelected(); if(!sel.length){showToast('Selecciona al menos un evento',true);return;}
+  const {title,body}=catText();
+  const to=document.getElementById('cat-email').value||'';
+  window.location.href=`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+}
+function catPrint(){
+  const sel=catSelected(); if(!sel.length){showToast('Selecciona al menos un evento',true);return;}
+  const title=document.getElementById('cat-title').value||'Catálogo de eventos';
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${esc(title)}</title><style>body{font-family:'Segoe UI',Arial,sans-serif;color:#2d3748;padding:30px}h1{color:#1a2e5a;border-bottom:3px solid #c8960c;padding-bottom:8px}.ev{border:1px solid #e2e6ed;border-radius:10px;padding:14px 16px;margin:12px 0}.ev h3{color:#1a2e5a;margin:0 0 6px}.ev p{margin:2px 0;font-size:13px;color:#5a6578}.tag{display:inline-block;background:#1a2e5a;color:#fff;border-radius:6px;padding:2px 8px;font-size:11px}</style></head><body><h1>${esc(title)}</h1>${sel.map(r=>`<div class="ev"><h3>${esc(r.descripcion||r.tipo)}</h3><p><span class="tag">${esc(r.campus)}</span> &nbsp; ${fmtFecha(r.fecha)} · ${esc(r.hora||'')} · ${esc(r.tipo)}</p><p><b>Panelistas:</b> ${esc(r.panelistas||'—')}</p><p><b>Público:</b> ${esc(r.publico||'—')}</p></div>`).join('')}<p style="margin-top:24px;color:#9aa3b2;font-size:12px">Decanato de Postgrado · PUCMM</p><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`);
+  w.document.close();
+}
+function catSave(){
+  const sel=catSelected(); if(!sel.length){showToast('Selecciona al menos un evento',true);return;}
+  const cats=store.get('catalogos',[]);
+  cats.unshift({id:'CAT-'+Date.now(),title:document.getElementById('cat-title').value||'Catálogo',ids:sel.map(r=>r.id),fecha:new Date().toISOString()});
+  store.set('catalogos',cats); renderSavedCatalogs(); showToast('Catálogo guardado');
+}
+function renderSavedCatalogs(){
+  const cats=store.get('catalogos',[]);
+  const el=document.getElementById('catSaved');
+  el.innerHTML=cats.length?cats.map(c=>`<div class="cat-saved-item"><div class="cs-main"><div class="cs-t">${esc(c.title)}</div><div class="cs-s">${c.ids.length} evento(s) · ${new Date(c.fecha).toLocaleDateString('es-DO')}</div></div><button class="btn btn-ghost btn-sm" onclick="catLoad('${c.id}')">Abrir</button><button class="action-btn rj" onclick="catDelete('${c.id}')">🗑</button></div>`).join(''):'<p style="color:var(--gray-400);font-size:13px">Aún no has guardado catálogos.</p>';
+}
+function catLoad(id){
+  const c=store.get('catalogos',[]).find(x=>x.id===id); if(!c) return;
+  document.getElementById('cat-title').value=c.title;
+  document.getElementById('cat-filter').value=''; renderCatPicker();
+  c.ids.forEach(eid=>{const cb=document.querySelector(`#catPicker input[value="${eid}"]`);if(cb)cb.checked=true;});
+  renderCatPreview(); showToast('Catálogo cargado');
+}
+function catDelete(id){
+  store.set('catalogos',store.get('catalogos',[]).filter(c=>c.id!==id)); renderSavedCatalogs();
+}
+
+// ═══════════════ USUARIOS ═══════════════
+function getUsers(){
+  let u=store.get('usuarios',null);
+  if(!u){u=[{id:'U1',name:'María Pérez',email:'mperez@pucmm.edu.do',role:'Coordinador(a)'}];store.set('usuarios',u);}
+  return u;
+}
+function renderUsers(){
+  const users=getUsers();
+  document.getElementById('usersBody').innerHTML=users.map(u=>`<tr><td class="name">${esc(u.name)}</td><td>${esc(u.email)}</td><td><span class="chip">${esc(u.role)}</span></td><td onclick="event.stopPropagation()"><div class="table-actions"><button class="action-btn" title="Editar" onclick="openUserModal('${u.id}')">✏️</button><button class="action-btn rj" title="Eliminar" onclick="deleteUser('${u.id}')">🗑</button></div></td></tr>`).join('');
+}
+function openUserModal(id){
+  document.getElementById('userModalTitle').textContent=id?'Editar usuario':'Agregar usuario';
+  const u=id?getUsers().find(x=>x.id===id):{id:'',name:'',email:'',role:'Coordinador(a)'};
+  document.getElementById('u-id').value=u.id; document.getElementById('u-name').value=u.name;
+  document.getElementById('u-email').value=u.email; document.getElementById('u-role').value=u.role;
+  document.getElementById('userBackdrop').classList.add('open');
+}
+function closeUserModal(){document.getElementById('userBackdrop').classList.remove('open');}
+function saveUser(){
+  const name=document.getElementById('u-name').value.trim(), email=document.getElementById('u-email').value.trim(), role=document.getElementById('u-role').value;
+  if(!name||!email){showToast('Nombre y correo son obligatorios',true);return;}
+  let users=getUsers(); const id=document.getElementById('u-id').value;
+  if(id){users=users.map(u=>u.id===id?{...u,name,email,role}:u);}
+  else{users.push({id:'U'+Date.now(),name,email,role});}
+  store.set('usuarios',users); closeUserModal(); renderUsers(); showToast('Usuario guardado');
+}
+function deleteUser(id){const users=getUsers().filter(u=>u.id!==id);store.set('usuarios',users);renderUsers();showToast('Usuario eliminado');}
+
+// ═══════════════ CONFIGURACIÓN ═══════════════
+function fillConfig(){
+  document.getElementById('cfg-script').value=APPS_SCRIPT_URL;
+  document.getElementById('cfg-sheet').value=SHEET_URL;
+  fillEventSelect();
+}
+function fillEventSelect(){
+  const sel=document.getElementById('cfg-event'); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">—</option>'+[...allData].sort((a,b)=>(parseFecha(a.fecha)||0)-(parseFecha(b.fecha)||0)).map(r=>`<option value="${r.id}">${esc(r.id)} · ${esc(r.descripcion||r.tipo)} (${esc(r.estado||'Pendiente')})</option>`).join('');
+  sel.value=cur;
+}
+function saveConfig(){
+  const s=document.getElementById('cfg-script').value.trim(), sh=document.getElementById('cfg-sheet').value.trim();
+  if(s){APPS_SCRIPT_URL=s;store.set('cfg_script',s);}
+  if(sh){SHEET_URL=sh;store.set('cfg_sheet',sh);}
+  showToast('Conexión guardada · recargando datos'); loadData();
+}
+function resetConfig(){
+  APPS_SCRIPT_URL=DEFAULT_SCRIPT_URL; SHEET_URL=DEFAULT_SHEET_URL;
+  store.set('cfg_script',DEFAULT_SCRIPT_URL); store.set('cfg_sheet',DEFAULT_SHEET_URL);
+  fillConfig(); showToast('Valores restablecidos');
+}
+function loadEventToEdit(){
+  const id=document.getElementById('cfg-event').value;
+  const box=document.getElementById('cfg-edit-fields');
+  if(!id){box.style.display='none';return;}
+  const r=allData.find(x=>x.id===id); if(!r) return;
+  box.style.display='block';
+  document.getElementById('e-fecha').value=(parseFecha(r.fecha)?parseFecha(r.fecha).toISOString().slice(0,10):'');
+  document.getElementById('e-hora').value=r.hora||'';
+  document.getElementById('e-estado').value=r.estado||'Pendiente';
+  document.getElementById('e-campus').value=r.campus||'CSD';
+  document.getElementById('e-desc').value=r.descripcion||'';
+  document.getElementById('e-csd').value=r.espacio_csd||'';
+  document.getElementById('e-csti').value=r.espacio_csti||'';
+  document.getElementById('e-coment').value=r.comentarios||'';
+}
+async function saveEventEdit(){
+  const id=document.getElementById('cfg-event').value; if(!id) return;
+  const cambios={
+    fecha:document.getElementById('e-fecha').value,
+    hora:document.getElementById('e-hora').value,
+    estado:document.getElementById('e-estado').value,
+    campus:document.getElementById('e-campus').value,
+    descripcion:document.getElementById('e-desc').value,
+    espacio_csd:document.getElementById('e-csd').value,
+    espacio_csti:document.getElementById('e-csti').value,
+    comentarios:document.getElementById('e-coment').value
+  };
+  const r=allData.find(x=>x.id===id); if(r) Object.assign(r,cambios);
+  renderEverything();
+  showToast('Cambios guardados en '+id);
+  try{
+    await fetch(APPS_SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'updateEvent',id,cambios})});
+  }catch(e){console.warn('No se pudo guardar en Sheets:',e);}
+}
+
+// ═══════════════ VARIOS ═══════════════
+function openForm(){window.open('formulario.html','_blank');}
+function openSheet(){window.open(SHEET_URL,'_blank');}
+function exportCSV(){
+  const headers=['ID','Timestamp','Solicitante','Correo','Campus','Programa','Tipo','Fecha','Hora','Duración','Descripción','Finalidad','Público','Panelistas','Invitados','Espacio CSD','Espacio CSTI','Mobiliario','Audiovisual','Soporte','Refrigerios','Comunicación','Mercadeo','Comentarios','Estado'];
+  const keys=['id','timestamp','solicitante','correo','campus','programa','tipo','fecha','hora','duracion','descripcion','finalidad','publico','panelistas','invitados','espacio_csd','espacio_csti','mobiliario','audiovisual','soporte','refrigerios','comunicacion','mercadeo','comentarios','estado'];
+  const rows=allData.map(r=>keys.map(k=>`"${String(r[k]==null?'':r[k]).replace(/"/g,'""')}"`).join(','));
+  const csv=[headers.join(','),...rows].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download=`solicitudes_pucmm_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+}
+
+// ═══════════════ INIT ═══════════════
+loadData();
+setInterval(loadData,60000);
+</script>
+</body>
+</html>
